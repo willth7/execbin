@@ -81,8 +81,8 @@ int32_t alc_shm(uint64_t sz) {
 }
 
 int8_t main(int32_t argc, int8_t** argv) {
-	if (argc != 3) {
-		printf("usage: execbin [binary.bin] [size of stack(bytes)]\n");
+	if (argc < 3) {
+		printf("usage: execbin [binary.bin] [size of stack(bytes)] [arguments...]\n");
 		return -1;
 	}
 	
@@ -103,8 +103,17 @@ int8_t main(int32_t argc, int8_t** argv) {
 	memcpy(mem, bin, fs.st_size);
 	munmap(bin, fs.st_size);
 	
-	int32_t pid = clone(mem, mem + sz, CLONE_VFORK, 0);	
-	printf("%i\n", pid);
+	int8_t* arg = malloc(8 * (argc - 3));
+	for (uint8_t i = 3; i < argc; i++) {
+		memcpy(arg, argv[i], 8);
+	}
+	
+	int32_t pid = clone((void*) mem, mem + sz, CLONE_VFORK, arg);
+	printf("pid %i\n", pid);
+	
+	if (arg) {
+		free(arg);
+	}
 	
 	munmap(mem, sz);
 	return 0;
